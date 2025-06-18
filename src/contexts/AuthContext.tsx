@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { toast } from 'react-toastify'; // ✅ Toast support
 
 export type UserRole = 'super_admin' | 'admin' | 'volunteer';
 
@@ -24,7 +25,7 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'view_all_funds',
     'promote_users',
     'demote_users',
-    'delete_users'
+    'delete_users',
   ],
   admin: [
     'approve_invoices',
@@ -33,14 +34,14 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'view_all_funds',
     'edit_invoices',
     'edit_reports',
-    'edit_funds'
+    'edit_funds',
   ],
   volunteer: [
     'create_invoices',
     'view_all_invoices',
     'create_reports',
-    'view_own_reports'
-  ]
+    'view_own_reports',
+  ],
 };
 
 export const useAuth = (): AuthContextType => {
@@ -62,36 +63,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return localStorage.getItem('userEmail');
   });
 
+  // Sync all auth-related values to localStorage
   useEffect(() => {
-    if (isAuthenticated) {
-      localStorage.setItem('isAuthenticated', 'true');
-    } else {
-      localStorage.removeItem('isAuthenticated');
-    }
-  }, [isAuthenticated]);
-
-  useEffect(() => {
+    localStorage.setItem('isAuthenticated', isAuthenticated ? 'true' : 'false');
     if (userRole) {
       localStorage.setItem('userRole', userRole);
     } else {
       localStorage.removeItem('userRole');
     }
-  }, [userRole]);
-
-  useEffect(() => {
     if (userEmail) {
       localStorage.setItem('userEmail', userEmail);
     } else {
       localStorage.removeItem('userEmail');
     }
-  }, [userEmail]);
+  }, [isAuthenticated, userRole, userEmail]);
 
+  // ✅ Toast-enhanced login
   const login = (role: UserRole, email: string) => {
     setIsAuthenticated(true);
     setUserRole(role);
     setUserEmail(email);
+    toast.success(`Logged in as ${role.replace('_', ' ')}`);
   };
 
+  // ✅ Toast-enhanced logout
   const logout = () => {
     setIsAuthenticated(false);
     setUserRole(null);
@@ -99,6 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('userRole');
     localStorage.removeItem('userEmail');
+    toast.info('You have been logged out');
   };
 
   const hasPermission = (permission: string): boolean => {
@@ -107,7 +103,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, userRole, userEmail, login, logout, hasPermission }}>
+    <AuthContext.Provider
+      value={{
+        isAuthenticated,
+        userRole,
+        userEmail,
+        login,
+        logout,
+        hasPermission,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

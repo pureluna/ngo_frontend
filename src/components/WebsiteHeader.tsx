@@ -5,44 +5,61 @@ import {
   Toolbar,
   IconButton,
   Typography,
-  Menu,
   Container,
   Button,
-  MenuItem,
-  useTheme,
-  useMediaQuery,
   Drawer,
   List,
   ListItem,
   ListItemText,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { useRole } from '../contexts/RoleContext';
 
-const pages = [
+const commonPages = [
   { title: 'Home', path: '/' },
   { title: 'About', path: '/about' },
   { title: 'Contact', path: '/contact' },
 ];
 
 export const WebsiteHeader = () => {
-  const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
-  const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorElNav(event.currentTarget);
-  };
-
-  const handleCloseNavMenu = () => {
-    setAnchorElNav(null);
-  };
+  const navigate = useNavigate();
+  const { isAuthenticated, logout } = useAuth();
+  const { role } = useRole();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  // Role-based pages
+  const roleBasedPages =
+    role === 'super_admin'
+      ? [
+          { title: 'Users', path: '/users' },
+          { title: 'Generate Report', path: '/reports/generate' },
+        ]
+      : role === 'admin'
+      ? [
+          { title: 'Invoices', path: '/invoices' },
+          { title: 'Accounts', path: '/accounts' },
+        ]
+      : role === 'volunteer'
+      ? [
+          { title: 'My Invoices', path: '/my-invoices' },
+          { title: 'My Reports', path: '/my-reports' },
+        ]
+      : [];
+
+  const allPages = [...commonPages, ...roleBasedPages];
+
+  // Drawer (mobile)
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
       <Typography
@@ -61,7 +78,7 @@ export const WebsiteHeader = () => {
         NGO FMS
       </Typography>
       <List>
-        {pages.map((page) => (
+        {allPages.map((page) => (
           <ListItem
             key={page.title}
             component={RouterLink}
@@ -76,16 +93,12 @@ export const WebsiteHeader = () => {
           >
             <ListItemText
               primary={page.title}
-              sx={{
-                fontFamily: 'var(--font-body)',
-                textAlign: 'center',
-              }}
+              sx={{ fontFamily: 'var(--font-body)', textAlign: 'center' }}
             />
           </ListItem>
         ))}
         <ListItem
-          component={RouterLink}
-          to="/login"
+          onClick={isAuthenticated ? handleLogout : () => navigate('/login')}
           sx={{
             color: 'var(--color-primary)',
             '&:hover': {
@@ -95,7 +108,7 @@ export const WebsiteHeader = () => {
           }}
         >
           <ListItemText
-            primary="Login"
+            primary={isAuthenticated ? 'Logout' : 'Login'}
             sx={{
               fontFamily: 'var(--font-body)',
               textAlign: 'center',
@@ -118,7 +131,7 @@ export const WebsiteHeader = () => {
     >
       <Container maxWidth="lg">
         <Toolbar disableGutters>
-          {/* Logo for desktop */}
+          {/* Desktop logo */}
           <Typography
             variant="h6"
             noWrap
@@ -136,15 +149,12 @@ export const WebsiteHeader = () => {
             NGO FMS
           </Typography>
 
-          {/* Mobile menu */}
+          {/* Mobile hamburger */}
           <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
             <IconButton
               size="large"
               aria-label="menu"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
               onClick={handleDrawerToggle}
-              color="inherit"
               sx={{ color: 'var(--color-text-main)' }}
             >
               <MenuIcon />
@@ -154,9 +164,7 @@ export const WebsiteHeader = () => {
               anchor="left"
               open={mobileOpen}
               onClose={handleDrawerToggle}
-              ModalProps={{
-                keepMounted: true,
-              }}
+              ModalProps={{ keepMounted: true }}
               sx={{
                 display: { xs: 'block', md: 'none' },
                 '& .MuiDrawer-paper': {
@@ -170,7 +178,7 @@ export const WebsiteHeader = () => {
             </Drawer>
           </Box>
 
-          {/* Logo for mobile */}
+          {/* Mobile logo */}
           <Typography
             variant="h6"
             noWrap
@@ -189,19 +197,18 @@ export const WebsiteHeader = () => {
             NGO FMS
           </Typography>
 
-          {/* Desktop menu */}
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            {pages.map((page) => (
+          {/* Desktop menu buttons */}
+          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, gap: 2 }}>
+            {allPages.map((page) => (
               <Button
                 key={page.title}
                 component={RouterLink}
                 to={page.path}
-                onClick={handleCloseNavMenu}
                 sx={{
                   my: 2,
                   color: 'var(--color-text-main)',
-                  display: 'block',
                   fontFamily: 'var(--font-body)',
+                  textTransform: 'none',
                   '&:hover': {
                     color: 'var(--color-primary)',
                   },
@@ -212,11 +219,10 @@ export const WebsiteHeader = () => {
             ))}
           </Box>
 
-          {/* Login button */}
+          {/* Login / Logout */}
           <Box sx={{ flexGrow: 0 }}>
             <Button
-              component={RouterLink}
-              to="/login"
+              onClick={isAuthenticated ? handleLogout : () => navigate('/login')}
               variant="contained"
               sx={{
                 background: 'var(--color-primary)',
@@ -230,11 +236,11 @@ export const WebsiteHeader = () => {
                 },
               }}
             >
-              Login
+              {isAuthenticated ? 'Logout' : 'Login'}
             </Button>
           </Box>
         </Toolbar>
       </Container>
     </AppBar>
   );
-}; 
+};
