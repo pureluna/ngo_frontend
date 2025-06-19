@@ -1,113 +1,64 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import type { ReactNode } from 'react';
+import React, { createContext, useState, useEffect, type ReactNode } from 'react';
+import { login as apiLogin } from '../services/api';
 
-export type UserRole = 'super_admin' | 'admin' | 'volunteer';
-
-interface AuthContextType {
-  isAuthenticated: boolean;
-  userRole: UserRole | null;
-  userEmail: string | null;
-  login: (role: UserRole, email: string) => void;
-  logout: () => void;
-  hasPermission: (permission: string) => boolean;
+interface User {
+  id: number;
+  username: string;
+  role: string;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  login: (username: string, password: string) => Promise<void>;
+  logout: () => void;
+  loading: boolean;
+}
 
-// Define permissions for each role
-const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
-  super_admin: [
-    'manage_users',
-    'delete_invoices',
-    'view_all_invoices',
-    'view_all_reports',
-    'view_all_funds',
-    'promote_users',
-    'demote_users',
-    'delete_users'
-  ],
-  admin: [
-    'approve_invoices',
-    'view_all_invoices',
-    'view_all_reports',
-    'view_all_funds',
-    'edit_invoices',
-    'edit_reports',
-    'edit_funds'
-  ],
-  volunteer: [
-    'create_invoices',
-    'view_all_invoices',
-    'create_reports',
-    'view_own_reports'
-  ]
-};
-
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+export const AuthContext = createContext<AuthContextType>({
+  user: null,
+  token: null,
+  login: async () => {},
+  logout: () => {},
+  loading: false,
+});
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('isAuthenticated') === 'true';
-  });
-  const [userRole, setUserRole] = useState<UserRole | null>(() => {
-    return localStorage.getItem('userRole') as UserRole | null;
-  });
-  const [userEmail, setUserEmail] = useState<string | null>(() => {
-    return localStorage.getItem('userEmail');
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      localStorage.setItem('isAuthenticated', 'true');
-    } else {
-      localStorage.removeItem('isAuthenticated');
+    const savedToken = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
+    if (savedToken && savedUser) {
+      setToken(savedToken);
+      setUser(JSON.parse(savedUser));
     }
-  }, [isAuthenticated]);
+  }, []);
 
-  useEffect(() => {
-    if (userRole) {
-      localStorage.setItem('userRole', userRole);
-    } else {
-      localStorage.removeItem('userRole');
+  const login = async (username: string, password: string) => {
+    setLoading(true);
+    try {
+      const res = await apiLogin(username, password);
+      setUser(res.user);
+      setToken(res.token);
+      localStorage.setItem('token', res.token);
+      localStorage.setItem('user', JSON.stringify(res.user));
+    } finally {
+      setLoading(false);
     }
-  }, [userRole]);
-
-  useEffect(() => {
-    if (userEmail) {
-      localStorage.setItem('userEmail', userEmail);
-    } else {
-      localStorage.removeItem('userEmail');
-    }
-  }, [userEmail]);
-
-  const login = (role: UserRole, email: string) => {
-    setIsAuthenticated(true);
-    setUserRole(role);
-    setUserEmail(email);
   };
 
   const logout = () => {
-    setIsAuthenticated(false);
-    setUserRole(null);
-    setUserEmail(null);
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userEmail');
-  };
-
-  const hasPermission = (permission: string): boolean => {
-    if (!userRole) return false;
-    return ROLE_PERMISSIONS[userRole].includes(permission);
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, userRole, userEmail, login, logout, hasPermission }}>
+    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

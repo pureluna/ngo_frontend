@@ -9,7 +9,6 @@ import {
 } from '@mui/material';
 import { WebsiteHeader } from '../components/WebsiteHeader';
 import { WebsiteFooter } from '../components/WebsiteFooter';
-import { useNavigate } from 'react-router-dom';
 
 const features = [
   {
@@ -30,12 +29,6 @@ const features = [
 ];
 
 export const WebsitePage = () => {
-  const navigate = useNavigate();
-
-  const handleLearnMoreClick = () => {
-    navigate('/about');
-  };
-
   return (
     <Box
       sx={{
@@ -232,7 +225,6 @@ export const WebsitePage = () => {
                     color: 'var(--color-primary-contrast)',
                   },
                 }}
-                onClick={() => navigate('/signup')}
               >
                 Sign Up Now
               </Button>
@@ -251,7 +243,6 @@ export const WebsitePage = () => {
                     color: 'var(--color-secondary)',
                   },
                 }}
-                onClick={handleLearnMoreClick}
               >
                 Learn More
               </Button>

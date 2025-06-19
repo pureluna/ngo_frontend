@@ -13,7 +13,7 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Mock login credentials
 const MOCK_CREDENTIALS = {
-  email: 'admin@example.com',
+  email: 'admin@gmail.com',
   password: 'password123',
 };
 
@@ -66,43 +66,6 @@ export const createInvoice = async (invoice: { vendor: string; amount: number })
   };
   mockInvoices.unshift(newInvoice);
   return { success: true, data: newInvoice };
-};
-
-// ✅ NEW: Mock functions for user management
-let mockUsers = [
-  { id: 1, email: 'admin@example.com', role: 'admin' },
-  { id: 2, email: 'volunteer@example.com', role: 'volunteer' },
-];
-
-export const getUsers = async () => {
-  await delay(300);
-  return { success: true, data: mockUsers };
-};
-
-export const updateUserRole = async (userId: number, newRole: 'admin' | 'volunteer') => {
-  await delay(300);
-  const user = mockUsers.find(u => u.id === userId);
-  if (!user) throw new Error('User not found');
-  if (!['admin', 'volunteer'].includes(newRole)) throw new Error('Invalid role');
-  user.role = newRole;
-  return { success: true, data: user };
-};
-
-export const deleteUser = async (userId: number) => {
-  await delay(300);
-  const index = mockUsers.findIndex(u => u.id === userId);
-  if (index === -1) throw new Error('User not found');
-  const deleted = mockUsers.splice(index, 1)[0];
-  return { success: true, data: deleted };
-};
-
-export const createUser = async (email: string, role: 'admin' | 'volunteer') => {
-  await delay(300);
-  if (!email || !email.includes('@')) throw new Error('Invalid email');
-  if (!['admin', 'volunteer'].includes(role)) throw new Error('Invalid role');
-  const newUser = { id: Date.now(), email, role };
-  mockUsers.push(newUser);
-  return { success: true, data: newUser };
 };
 
 api.interceptors.request.use((config) => {

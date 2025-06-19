@@ -63,7 +63,7 @@ export const ContactPage = () => {
             }}
           >
             <Grid container spacing={4}>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={6} component="div">
                 <Typography
                   variant="h4"
                   component="h2"

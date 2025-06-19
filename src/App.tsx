@@ -1,30 +1,26 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import PrivateRoute from './routes/PrivateRoute';
-
-// Import your pages here
-// import { HomePage } from './pages/HomePage';
+import { HomePage } from './pages/HomePage';
 import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 import { LoginPage } from './pages/LoginPage';
-import { SignupPage } from './pages/SignupPage';
-import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { WebsitePage } from './pages/WebsitePage';
 import { DashboardPage } from './pages/DashboardPage';
 import { InvoicesPage } from './pages/InvoicesPage';
 import { AccountsPage } from './pages/AccountsPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { AddInvoicePage } from './pages/AddInvoicePage';
-import { NotAuthorized } from './pages/NotAuthorized';
-import { UserManagementPage } from './pages/UserManagementPage';
 
-// PublicRoute component — redirects logged in users from public pages
-const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated } = useAuth();
+// New imports for the added pages
+import { SettingsPage } from './pages/SettingsPage';
+import { UserProfilePage } from './pages/UserProfilePage';
+import { NotFoundPage } from './pages/NotFoundPage';
 
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+// Protected Route component
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
   }
 
   return <>{children}</>;
@@ -46,108 +42,36 @@ const GenerateReportPage = () => (
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<WebsitePage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route
-            path="/login"
-            element={
-              <PublicRoute>
-                <LoginPage />
-              </PublicRoute>
-            }
-          />
-          <Route
-            path="/signup"
-            element={
-              <PublicRoute>
-                <SignupPage />
-              </PublicRoute>
-            }
-          />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+    <Router>
+      <Routes>
+        <Route path="/" element={<WebsitePage />} />
+        <Route path="/home" element={<HomePage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/invoices" element={<InvoicesPage />} />
+        <Route path="/invoices/new" element={<AddInvoicePage />} />
+        <Route path="/accounts" element={<AccountsPage />} />
+        <Route path="/accounts/new" element={<AddAccountPage />} />
+        <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/reports/new" element={<GenerateReportPage />} />
 
-          {/* Protected routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <PrivateRoute>
-                <DashboardPage />
-              </PrivateRoute>
-            }
-          />
+        {/* New routes */}
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/profile" element={<UserProfilePage />} />
 
-          {/* Super Admin routes */}
-          <Route
-            path="/users"
-            element={
-              <PrivateRoute requiredRole="super_admin">
-                <UserManagementPage />
-              </PrivateRoute>
-            }
-          />
-
-          {/* Admin and Super Admin routes */}
-          <Route
-            path="/invoices"
-            element={
-              <PrivateRoute requiredPermission="view_all_invoices">
-                <InvoicesPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/invoices/new"
-            element={
-              <PrivateRoute requiredPermission="create_invoices">
-                <AddInvoicePage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/reports"
-            element={
-              <PrivateRoute requiredPermission="view_all_reports">
-                <ReportsPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/accounts"
-            element={
-              <PrivateRoute requiredPermission="view_all_funds">
-                <AccountsPage />
-              </PrivateRoute>
-            }
-          />
-
-          {/* Volunteer routes */}
-          <Route
-            path="/my-invoices"
-            element={
-              <PrivateRoute requiredPermission="view_invoices">
-                <InvoicesPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/my-reports"
-            element={
-              <PrivateRoute requiredPermission="view_own_reports">
-                <ReportsPage />
-              </PrivateRoute>
-            }
-          />
-
-          {/* Not authorized page */}
-          <Route path="/not-authorized" element={<NotAuthorized />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+        {/* Catch-all route for 404 Not Found */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </Router>
   );
 }
 

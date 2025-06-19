@@ -21,8 +21,6 @@ import ReceiptIcon from '@mui/icons-material/Receipt';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { useAuth } from '../contexts/AuthContext';
-import AddIcon from '@mui/icons-material/Add';
 
 const drawerWidth = 240;
 
@@ -35,28 +33,21 @@ export const DashboardLayout = ({ title, children }: DashboardLayoutProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout, hasPermission, userRole } = useAuth();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
   const handleLogout = () => {
-    logout();
+    localStorage.removeItem('isAuthenticated');
     navigate('/login');
   };
 
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-    { text: 'Invoices', icon: <ReceiptIcon />, path: '/invoices', showForRoles: ['admin', 'super_admin'] },
-    { text: 'Accounts', icon: <AccountBalanceIcon />, path: '/accounts', showForRoles: ['admin', 'super_admin'] },
-    { text: 'Add Invoice', icon: <AddIcon />, path: '/invoices/new', showForRoles: ['volunteer', 'admin', 'super_admin'] },
-    {
-      text: 'Reports',
-      icon: <AssessmentIcon />,
-      path: userRole === 'volunteer' ? '/my-reports' : '/reports',
-      showForRoles: ['super_admin', 'admin', 'volunteer'],
-    },
+    { text: 'Invoices', icon: <ReceiptIcon />, path: '/invoices' },
+    { text: 'Accounts', icon: <AccountBalanceIcon />, path: '/accounts' },
+    { text: 'Reports', icon: <AssessmentIcon />, path: '/reports' },
   ];
 
   const drawer = (
@@ -82,9 +73,6 @@ export const DashboardLayout = ({ title, children }: DashboardLayoutProps) => {
       <Divider />
       <List>
         {menuItems.map((item) => {
-          if (item.showForRoles && (!userRole || !item.showForRoles.includes(userRole))) {
-            return null;
-          }
           const isActive = location.pathname.startsWith(item.path);
           return (
             <ListItem
